@@ -3,12 +3,18 @@ package ds.gae;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
+import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.ProjectionEntity;
+import com.google.cloud.datastore.Query;
+import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 
 import ds.gae.entities.Car;
 import ds.gae.entities.CarRentalCompany;
@@ -57,8 +63,20 @@ public class CarRentalModel {
 	 *         car rental company.
 	 */
 	public Set<String> getCarTypesNames(String companyName) {
-		// FIXME add implementation
-		return null;
+		Query<ProjectionEntity> query = Query.newProjectionEntityQueryBuilder()
+				.setKind("CarType")
+				.setFilter(PropertyFilter.hasAncestor(datastore.newKeyFactory().setKind("CarRentalCompany").newKey(companyName)))
+				.setProjection("name")
+				.build();
+		QueryResults<ProjectionEntity> results = datastore.run(query);
+		
+		Set<String> carTypeNames = new HashSet<String>();
+		while(results.hasNext()) {
+			ProjectionEntity carType = results.next();
+			carTypeNames.add(carType.getString("name"));
+		}
+		
+		return carTypeNames;
 	}
 
 	/**
@@ -67,8 +85,19 @@ public class CarRentalModel {
 	 * @return the list of car rental companies
 	 */
 	public Collection<String> getAllRentalCompanyNames() {
-		// FIXME use persistence instead
-    	return null;
+		Query<ProjectionEntity> query = Query.newProjectionEntityQueryBuilder()
+				.setKind("CarRentalCompany")
+				.setProjection("name")
+				.build();
+		QueryResults<ProjectionEntity> results = datastore.run(query);
+		
+		Collection<String> rentalCompanyNames = new ArrayList<>();
+		while(results.hasNext()) {
+			ProjectionEntity company = results.next();
+			rentalCompanyNames.add(company.getString("name"));
+		}
+		
+    	return rentalCompanyNames;
 	}
 
 	/**
