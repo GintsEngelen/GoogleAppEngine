@@ -7,6 +7,8 @@ import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.PathElement;
 
+import ds.gae.CarRentalModel;
+
 public class CarType {
 
 	private String name;
@@ -92,7 +94,8 @@ public class CarType {
 		return true;
 	}
 
-	public void persist(Datastore datastore, String companyName, int id) {
+	public void persist( String companyName, int id) {
+		Datastore datastore = CarRentalModel.get().datastore;
 		Key carTypeKey = datastore.newKeyFactory()
 				.addAncestors(PathElement.of("CarRentalCompany", companyName), PathElement.of("Car", id))
 				.setKind("CarType")

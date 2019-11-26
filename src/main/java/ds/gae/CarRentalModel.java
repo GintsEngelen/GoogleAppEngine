@@ -11,6 +11,7 @@ import java.util.Set;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.ProjectionEntity;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
@@ -25,7 +26,7 @@ import ds.gae.entities.ReservationConstraints;
 
 public class CarRentalModel {
 
-	Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+	public Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 	
 	private static CarRentalModel instance;
 
@@ -37,7 +38,7 @@ public class CarRentalModel {
 	}
 
 	public void persistCarRentalCompany(CarRentalCompany company) {
-		company.persist(datastore);
+		company.persist();
 	}
 	
 	public void persistCars(CarRentalCompany company, Map<Car, CarType> carsMap) {
@@ -48,11 +49,11 @@ public class CarRentalModel {
 	}
 	
 	public void persistCar(CarRentalCompany company, Car car) {
-		car.persist(datastore, company.getName());
+		car.persist(company.getName());
 	}
 	
 	public void persistCarType(CarRentalCompany company, Car car, CarType carType) {
-		carType.persist(datastore, company.getName(), car.getId());
+		carType.persist(company.getName(), car.getId());
 	}
 	
 	/**
@@ -114,10 +115,13 @@ public class CarRentalModel {
 	 */
 	public Quote createQuote(String companyName, String renterName, ReservationConstraints constraints)
 			throws ReservationException {
-		// FIXME: use persistence instead
-		return null;
-//    	CarRentalCompany crc = CRCS.get(companyName);
-//		return crc.createQuote(constraints, renterName);
+		Key companyKey = datastore.newKeyFactory()
+				.setKind("CarRentalCompany")
+				.newKey(companyName);
+		Entity carRentalCompanyEntity = datastore.get(companyKey);
+		CarRentalCompany company = new CarRentalCompany(carRentalCompanyEntity);
+		
+		return company.createQuote(constraints, renterName);
 	}
 
 	/**

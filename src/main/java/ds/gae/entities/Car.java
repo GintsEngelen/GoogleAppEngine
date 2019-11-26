@@ -9,6 +9,8 @@ import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import com.google.cloud.datastore.PathElement;
 
+import ds.gae.CarRentalModel;
+
 public class Car {
 
 	private int id;
@@ -71,7 +73,8 @@ public class Car {
 		//TODO: Implement
 	}
 
-	public void persist(Datastore datastore, String companyName) {
+	public void persist(String companyName) {
+		Datastore datastore = CarRentalModel.get().datastore;
 		Key carKey = datastore.newKeyFactory()
 				.addAncestor(PathElement.of("CarRentalCompany", companyName))
 				.setKind("Car")
@@ -81,5 +84,13 @@ public class Car {
 				.build();
 		
 		datastore.put(car);
+	}
+	
+	@Override
+	public boolean equals(Object object) {
+		if(object instanceof Car) {
+			return this.id == ((Car) object).id;
+		}
+		return false;
 	}
 }
