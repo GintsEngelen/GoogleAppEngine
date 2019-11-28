@@ -3,7 +3,12 @@ package ds.gae.entities;
 import java.util.Date;
 import java.util.Objects;
 
+import com.google.cloud.Timestamp;
+import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.Key;
+
+import ds.gae.CarRentalModel;
 
 public class Reservation extends Quote {
 	
@@ -37,11 +42,12 @@ public class Reservation extends Quote {
 
 	public Reservation(Entity reservationEntity) {
 		this(reservationEntity.getString("renter"),
-				reservationEntity.getTimestamp("start").toDate(),
-				reservationEntity.getTimestamp("end").toDate(),
+				reservationEntity.getTimestamp("startDate").toDate(),
+				reservationEntity.getTimestamp("endDate").toDate(),
 				reservationEntity.getString("rentalCompany"),
 				reservationEntity.getString("carType"),
 				reservationEntity.getDouble("rentalPrice"));
+		this.carId = Math.toIntExact(reservationEntity.getLong("carId"));
 	}
 
 	/******
@@ -85,5 +91,22 @@ public class Reservation extends Quote {
 			return false;
 		}
 		return true;
+	}
+
+	public void persist() {
+		Datastore datastore = CarRentalModel.get().datastore;
+		Key reservationKey = datastore.allocateId(datastore.newKeyFactory().setKind("Reservation").newKey());
+				
+		Entity reservation = Entity.newBuilder(reservationKey)
+				.set("carId", getCarId())
+				.set("startDate", Timestamp.of(getStartDate()))
+				.set("endDate", Timestamp.of(getEndDate()))
+				.set("renter", getRenter())
+				.set("rentalCompany", getRentalCompany())
+				.set("carType", getCarType())
+				.set("rentalPrice", getRentalPrice())
+				.build();
+		
+		datastore.put(reservation);
 	}
 }

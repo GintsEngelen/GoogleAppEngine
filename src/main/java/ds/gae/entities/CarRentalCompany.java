@@ -282,9 +282,9 @@ public class CarRentalCompany {
 					+ " are unavailable from " + quote.getStartDate() + " to " + quote.getEndDate());
 		}
 		Car car = availableCars.get((int) (Math.random() * availableCars.size()));
-
+		
 		Reservation res = new Reservation(quote, car.getId());
-		car.addReservation(res);
+		res.persist();
 		return res;
 	}
 

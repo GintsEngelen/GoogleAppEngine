@@ -124,8 +124,9 @@ public class CarRentalModel {
 	 */
 	public void confirmQuote(Quote quote) throws ReservationException {
 		// FIXME: use persistence instead
-//		CarRentalCompany crc = CRCS.get(quote.getRentalCompany());
-//		crc.confirmQuote(quote);
+		CarRentalCompany company = new CarRentalCompany(quote.getRentalCompany());
+		
+		company.confirmQuote(quote);
 	}
 
 	/**
