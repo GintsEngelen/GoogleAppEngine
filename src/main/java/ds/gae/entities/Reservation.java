@@ -3,6 +3,8 @@ package ds.gae.entities;
 import java.util.Date;
 import java.util.Objects;
 
+import com.google.cloud.datastore.Entity;
+
 public class Reservation extends Quote {
 	
 	private int carId;
@@ -31,6 +33,15 @@ public class Reservation extends Quote {
 			String carType,
 			double rentalPrice) {
 		super(renter, start, end, rentalCompany, carType, rentalPrice);
+	}
+
+	public Reservation(Entity reservationEntity) {
+		this(reservationEntity.getString("renter"),
+				reservationEntity.getTimestamp("start").toDate(),
+				reservationEntity.getTimestamp("end").toDate(),
+				reservationEntity.getString("rentalCompany"),
+				reservationEntity.getString("carType"),
+				reservationEntity.getDouble("rentalPrice"));
 	}
 
 	/******

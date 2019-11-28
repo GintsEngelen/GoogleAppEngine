@@ -35,6 +35,14 @@ public class CarType {
 		this.smokingAllowed = smokingAllowed;
 	}
 
+	public CarType(Entity carTypeEntity) {
+		this(carTypeEntity.getKey().getName(),
+				Math.toIntExact(carTypeEntity.getLong("nbOfSeats")),
+				(float) carTypeEntity.getDouble("trunkSpace"),
+				carTypeEntity.getDouble("rentalPricePerDay"),
+				carTypeEntity.getBoolean("smokingAllowed"));
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -94,12 +102,12 @@ public class CarType {
 		return true;
 	}
 
-	public void persist( String companyName, int id) {
+	public void persist( String companyName) {
 		Datastore datastore = CarRentalModel.get().datastore;
 		Key carTypeKey = datastore.newKeyFactory()
-				.addAncestors(PathElement.of("CarRentalCompany", companyName), PathElement.of("Car", id))
+				.addAncestors(PathElement.of("CarRentalCompany", companyName))
 				.setKind("CarType")
-				.newKey("name");
+				.newKey(getName());
 		
 		Entity carType = Entity.newBuilder(carTypeKey)
 				.set("nbOfSeats", getNbOfSeats())

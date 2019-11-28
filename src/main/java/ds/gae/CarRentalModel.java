@@ -42,9 +42,15 @@ public class CarRentalModel {
 	}
 	
 	public void persistCars(CarRentalCompany company, Map<Car, CarType> carsMap) {
-		for(Car car : carsMap.keySet()) {
+		Set<CarType> carTypes = new HashSet<CarType>(carsMap.values());
+		Set<Car> cars = carsMap.keySet();
+		
+		for(CarType carType : carTypes) {
+			persistCarType(company, carType);
+		}
+		
+		for(Car car : cars) {
 			persistCar(company, car);
-			persistCarType(company, car, carsMap.get(car));
 		}
 	}
 	
@@ -52,8 +58,8 @@ public class CarRentalModel {
 		car.persist(company.getName());
 	}
 	
-	public void persistCarType(CarRentalCompany company, Car car, CarType carType) {
-		carType.persist(company.getName(), car.getId());
+	public void persistCarType(CarRentalCompany company, CarType carType) {
+		carType.persist(company.getName());
 	}
 	
 	/**
@@ -64,20 +70,9 @@ public class CarRentalModel {
 	 *         car rental company.
 	 */
 	public Set<String> getCarTypesNames(String companyName) {
-		Query<ProjectionEntity> query = Query.newProjectionEntityQueryBuilder()
-				.setKind("CarType")
-				.setFilter(PropertyFilter.hasAncestor(datastore.newKeyFactory().setKind("CarRentalCompany").newKey(companyName)))
-				.setProjection("name")
-				.build();
-		QueryResults<ProjectionEntity> results = datastore.run(query);
-		
-		Set<String> carTypeNames = new HashSet<String>();
-		while(results.hasNext()) {
-			ProjectionEntity carType = results.next();
-			carTypeNames.add(carType.getString("name"));
-		}
-		
-		return carTypeNames;
+		CarRentalCompany company = new CarRentalCompany(companyName);
+				
+		return company.getCarTypesString();
 	}
 
 	/**
@@ -115,11 +110,7 @@ public class CarRentalModel {
 	 */
 	public Quote createQuote(String companyName, String renterName, ReservationConstraints constraints)
 			throws ReservationException {
-		Key companyKey = datastore.newKeyFactory()
-				.setKind("CarRentalCompany")
-				.newKey(companyName);
-		Entity carRentalCompanyEntity = datastore.get(companyKey);
-		CarRentalCompany company = new CarRentalCompany(carRentalCompanyEntity);
+		CarRentalCompany company = new CarRentalCompany(companyName);
 		
 		return company.createQuote(constraints, renterName);
 	}
@@ -158,19 +149,23 @@ public class CarRentalModel {
 	 * @return the list of reservations of the given car renter
 	 */
 	public List<Reservation> getReservations(String renter) {
-		// FIXME: use persistence instead
-		return null;
-//		List<Reservation> out = new ArrayList<Reservation>();	
-//    	for (CarRentalCompany crc : CRCS.values()) {
-//    		for (Car c : crc.getCars()) {
-//    			for (Reservation r : c.getReservations()) {
-//    				if (r.getRenter().equals(renter)) {
-//    					out.add(r);
-//    				}
-//    			}
-//    		}
-//    	}
-//    	return out;
+		List<Reservation> reservations = new ArrayList<>();
+		
+		Datastore datastore = CarRentalModel.get().datastore;
+		Query<Entity> query = Query.newEntityQueryBuilder()
+				.setKind("Reservation")
+				.setFilter(PropertyFilter.eq("renter", renter))
+				.build();
+		
+		QueryResults<Entity> results = datastore.run(query);
+		
+		while(results.hasNext()) {
+			Entity reservationEntity = results.next();
+			reservations.add(new Reservation(reservationEntity));
+		}
+
+		return reservations;
+
 	}
 
 	/**
@@ -180,11 +175,8 @@ public class CarRentalModel {
 	 * @return The list of car types in the given car rental company.
 	 */
 	public Collection<CarType> getCarTypesOfCarRentalCompany(String companyName) {
-		// FIXME: use persistence instead
-		return null;
-//    	CarRentalCompany crc = CRCS.get(companyName);
-//    	Collection<CarType> out = new ArrayList<CarType>(crc.getAllCarTypes());
-//        return out;
+		CarRentalCompany company = new CarRentalCompany(companyName);
+		return company.getAllCarTypes();
 	}
 
 	/**
@@ -195,11 +187,8 @@ public class CarRentalModel {
 	 * @return A list of car IDs of cars with the given car type.
 	 */
 	public Collection<Integer> getCarIdsByCarType(String companyName, CarType carType) {
-		Collection<Integer> out = new ArrayList<Integer>();
-		for (Car c : getCarsByCarType(companyName, carType)) {
-			out.add(c.getId());
-		}
-		return out;
+		CarRentalCompany company = new CarRentalCompany(companyName);
+		return company.getCarIdsByCarType(carType.getName());
 	}
 
 	/**
@@ -222,16 +211,9 @@ public class CarRentalModel {
 	 */
 	private List<Car> getCarsByCarType(String companyName, CarType carType) {
 		// FIXME: use persistence instead
-		return null;
-//		List<Car> out = new ArrayList<Car>(); 
-//		for(CarRentalCompany crc : CRCS.values()) {
-//			for (Car c : crc.getCars()) {
-//				if (c.getType() == carType) { 
-//					out.add(c);
-//				}
-//			}
-//		}
-//		return out;
+		CarRentalCompany company = new CarRentalCompany(companyName);
+		
+		return new ArrayList<Car>(company.getCarsOfType(carType.getName()));
 
 	}
 

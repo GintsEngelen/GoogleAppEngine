@@ -14,6 +14,7 @@ import ds.gae.CarRentalModel;
 public class Car {
 
 	private int id;
+	private String carType;
 //	private CarType carType;
 //	private Set<Reservation> reservations;
 
@@ -21,8 +22,13 @@ public class Car {
 	 * CONSTRUCTOR *
 	 ***************/
 
-	public Car(int uid) {
+	public Car(int uid, String carType) {
 		this.id = uid;
+		this.carType = carType;
+	}
+
+	public Car(Entity carEntity) {
+		this(Math.toIntExact(carEntity.getKey().getId()), carEntity.getString("carType"));
 	}
 
 	/******
@@ -37,9 +43,9 @@ public class Car {
 	 * CAR TYPE *
 	 ************/
 
-	public CarType getType() {
+	public String getCarType() {
 		//TODO: Implement
-		return null;
+		return this.carType;
 	}
 
 	/****************
@@ -76,11 +82,12 @@ public class Car {
 	public void persist(String companyName) {
 		Datastore datastore = CarRentalModel.get().datastore;
 		Key carKey = datastore.newKeyFactory()
-				.addAncestor(PathElement.of("CarRentalCompany", companyName))
+				.addAncestors(PathElement.of("CarRentalCompany", companyName), PathElement.of("CarType", getCarType()))
 				.setKind("Car")
 				.newKey(this.id);
 		
 		Entity car = Entity.newBuilder(carKey)
+				.set("carType", getCarType())
 				.build();
 		
 		datastore.put(car);

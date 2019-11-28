@@ -95,7 +95,7 @@ public class CarRentalServletContextListener implements ServletContextListener {
 					Boolean.parseBoolean(csvReader.nextToken()));
 			// create N new cars with given type, where N is the 5th field
 			for (int i = Integer.parseInt(csvReader.nextToken()); i > 0; i--) {
-				carsMap.put(new Car(carId++), type);
+				carsMap.put(new Car(carId++, type.getName()), type);
 			}
 		}
 
