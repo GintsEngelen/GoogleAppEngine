@@ -95,6 +95,12 @@ public class Reservation extends Quote {
 
 	public void persist() {
 		Datastore datastore = CarRentalModel.get().datastore;
+		
+		datastore.put(getReservationEntity());
+	}
+	
+	public Entity getReservationEntity() {
+		Datastore datastore = CarRentalModel.get().datastore;
 		Key reservationKey = datastore.allocateId(datastore.newKeyFactory().setKind("Reservation").newKey());
 				
 		Entity reservation = Entity.newBuilder(reservationKey)
@@ -107,6 +113,6 @@ public class Reservation extends Quote {
 				.set("rentalPrice", getRentalPrice())
 				.build();
 		
-		datastore.put(reservation);
+		return reservation;
 	}
 }

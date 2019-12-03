@@ -16,6 +16,7 @@ import com.google.cloud.datastore.ProjectionEntity;
 import com.google.cloud.datastore.Query;
 import com.google.cloud.datastore.QueryResults;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
+import com.google.cloud.datastore.Transaction;
 
 import ds.gae.entities.Car;
 import ds.gae.entities.CarRentalCompany;
@@ -122,11 +123,12 @@ public class CarRentalModel {
 	 * 
 	 * @throws ReservationException Confirmation of given quote failed.
 	 */
-	public void confirmQuote(Quote quote) throws ReservationException {
-		// FIXME: use persistence instead
+	public Reservation confirmQuote(Quote quote) throws ReservationException {
 		CarRentalCompany company = new CarRentalCompany(quote.getRentalCompany());
 		
-		company.confirmQuote(quote);
+		Reservation res = company.confirmQuote(quote);
+		res.persist();
+		return res;
 	}
 
 	/**
@@ -139,8 +141,28 @@ public class CarRentalModel {
 	 *                              none of the given quotes is confirmed.
 	 */
 	public List<Reservation> confirmQuotes(List<Quote> quotes) throws ReservationException {
-		// TODO: add implementation when time left, required for GAE2
-    	return null;
+		List<Reservation> reservations = new ArrayList<>();
+		Transaction txn = datastore.newTransaction();
+		
+		try {
+			for(Quote quote : quotes) {
+				CarRentalCompany company = new CarRentalCompany(quote.getRentalCompany());
+				
+				Reservation res = company.confirmQuote(quote);
+				
+				txn.put(res.getReservationEntity());
+			}
+			
+			txn.commit();
+		}
+		finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				throw new ReservationException("One of the quotes could not be confirmed");
+			}
+		}
+		
+    	return reservations;
 	}
 
 	/**
