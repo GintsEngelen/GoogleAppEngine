@@ -44,40 +44,12 @@ public class Car {
 	 ************/
 
 	public String getCarType() {
-		//TODO: Implement
 		return this.carType;
 	}
 
 	/****************
 	 * RESERVATIONS *
 	 ****************/
-
-	public Set<Reservation> getReservations() {
-		//TODO: Implement
-		return null;
-	}
-
-	public boolean isAvailable(Date start, Date end) {
-		if (!start.before(end)) {
-			throw new IllegalArgumentException("Illegal given period");
-		}
-
-		for (Reservation reservation : getReservations()) {
-			if (reservation.getEndDate().before(start) || reservation.getStartDate().after(end)) {
-				continue;
-			}
-			return false;
-		}
-		return true;
-	}
-
-	public void addReservation(Reservation res) {
-		//TODO: Implement
-	}
-
-	public void removeReservation(Reservation reservation) {
-		//TODO: Implement
-	}
 
 	public void persist(String companyName) {
 		Datastore datastore = CarRentalModel.get().datastore;
@@ -96,8 +68,13 @@ public class Car {
 	@Override
 	public boolean equals(Object object) {
 		if(object instanceof Car) {
-			return this.id == ((Car) object).id;
+			return this.getId() == ((Car) object).getId();
 		}
 		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+	    return this.getId(); // or any other constant
 	}
 }

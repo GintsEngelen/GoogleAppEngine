@@ -288,8 +288,9 @@ public class CarRentalCompany {
 	}
 
 	public void cancelReservation(Reservation res) {
+		//TODO: implement
 		logger.log(Level.INFO, "<{0}> Cancelling reservation {1}", new Object[] { name, res.toString() });
-		getCar(res.getCarId()).removeReservation(res);
+		//getCar(res.getCarId()).removeReservation(res);
 	}
 
 	public void persist() {
