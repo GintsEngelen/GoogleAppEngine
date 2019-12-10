@@ -11,8 +11,8 @@
 	<h2>Reply</h2>
 	<div class="group">
 		<p>
-			TODO: Here you can give some information to client who is currently 
-			logged in as user <%=renter%>.
+			Hello <%=renter%>, <br> <br>
+			Your quotes are being processed. You will be notified of the result by email in, at most, a couple of days.
 		</p>
 	</div>
 </div>

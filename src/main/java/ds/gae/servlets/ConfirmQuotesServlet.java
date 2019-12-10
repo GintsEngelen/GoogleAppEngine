@@ -47,7 +47,8 @@ public class ConfirmQuotesServlet extends HttpServlet {
 		byte[] rawData = baos.toByteArray();
 			
 		Queue queue = QueueFactory.getDefaultQueue();
-		queue.add(TaskOptions.Builder.withUrl("/worker").payload(rawData));
+		queue.add(TaskOptions.Builder.withUrl("/worker").payload(rawData).param("renter", (String) session.getAttribute("renter")));
 		
+		resp.sendRedirect(JSPSite.CONFIRM_QUOTES_RESPONSE.url());
 	}
 }
