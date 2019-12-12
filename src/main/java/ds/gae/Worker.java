@@ -12,6 +12,7 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
+import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.ServletException;
@@ -34,28 +35,46 @@ public class Worker extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		
+		String renter = "";
 		try {
 			
 			ServletInputStream is = req.getInputStream();
 			ObjectInputStream ois = new ObjectInputStream(is);
 
-		    ArrayList<Quote> qs = (ArrayList<Quote>) ois.readObject();
+		    QuotesPayload payload = (QuotesPayload) ois.readObject();
 					    
-			CarRentalModel.get().confirmQuotes(qs);
-			
-			String renter = (String) req.getAttribute("renter");
-			
+		    ArrayList<Quote> quotes = payload.getQuotes();
+		    
+			renter = payload.getRenter();
+			CarRentalModel.get().confirmQuotes(quotes);
+						
 			Session session = Session.getDefaultInstance(new Properties(), null);
 			Message msg = new MimeMessage(session);
 			msg.setFrom(new InternetAddress("admin@distributed-systems-gae.appspotemail.com"));
 			msg.addRecipient(Message.RecipientType.TO, new InternetAddress(renter + "@gmail.com"));
-			msg.setSubject("Do you copy?");msg.setText("This was sent by our google app engine");
+			msg.setSubject("Quotes confirmed");
+			msg.setText("Your quotes have succesfully been confirmed");
 			Transport.send(msg);
-			
-			System.out.println("Mail succesfully sent, maybe");
-		} catch (ReservationException | ClassNotFoundException | MessagingException e) {
+
+		} catch (ReservationException e) {
+				System.out.println(e.getMessage());
 				
-		}
+				Session session = Session.getDefaultInstance(new Properties(), null);
+				Message msg = new MimeMessage(session);
+				try {
+					msg.setFrom(new InternetAddress("admin@distributed-systems-gae.appspotemail.com"));
+					msg.addRecipient(Message.RecipientType.TO, new InternetAddress(renter + "@gmail.com"));
+					msg.setSubject("Could not confirm quotes");
+					msg.setText("Confirmation of your quotes was not succesful");
+					Transport.send(msg);
+				} catch (MessagingException e1) {
+					e1.printStackTrace();
+				}
+				
+		} catch (MessagingException e ) {			
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} 
 	}
 }

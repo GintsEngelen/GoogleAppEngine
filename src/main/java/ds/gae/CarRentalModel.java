@@ -148,7 +148,8 @@ public class CarRentalModel {
 			for(Quote quote : quotes) {
 				CarRentalCompany company = new CarRentalCompany(quote.getRentalCompany());
 				
-				Reservation res = company.confirmQuote(quote);
+				Reservation res = company.confirmQuote(quote, new ArrayList<Reservation>(reservations));
+				reservations.add(res);
 				
 				txn.put(res.getReservationEntity());
 			}

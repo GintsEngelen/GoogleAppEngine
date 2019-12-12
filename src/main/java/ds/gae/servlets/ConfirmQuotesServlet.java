@@ -17,6 +17,7 @@ import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 
 import ds.gae.CarRentalModel;
+import ds.gae.QuotesPayload;
 import ds.gae.ReservationException;
 import ds.gae.entities.Quote;
 import ds.gae.view.JSPSite;
@@ -33,21 +34,25 @@ public class ConfirmQuotesServlet extends HttpServlet {
 		HttpSession session = req.getSession();
 		HashMap<String, ArrayList<Quote>> allQuotes = (HashMap<String, ArrayList<Quote>>) session.getAttribute("quotes");
 
+		String renter = (String) session.getAttribute("renter");
+		
 		ArrayList<Quote> qs = new ArrayList<Quote>();
 			
 		for (String crcName : allQuotes.keySet()) {
 			qs.addAll(allQuotes.get(crcName));
 		}
+		
+		QuotesPayload payload = new QuotesPayload(qs, renter);
 					
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(baos);
-		oos.writeObject(qs);
+		oos.writeObject(payload);
 		oos.close();
 			
 		byte[] rawData = baos.toByteArray();
 			
 		Queue queue = QueueFactory.getDefaultQueue();
-		queue.add(TaskOptions.Builder.withUrl("/worker").payload(rawData).param("renter", (String) session.getAttribute("renter")));
+		queue.add(TaskOptions.Builder.withUrl("/worker").payload(rawData));
 		
 		resp.sendRedirect(JSPSite.CONFIRM_QUOTES_RESPONSE.url());
 	}

@@ -275,8 +275,15 @@ public class CarRentalCompany {
 	}
 
 	public Reservation confirmQuote(Quote quote) throws ReservationException {
+		return this.confirmQuote(quote, new ArrayList<Reservation>());
+	}
+	
+	public Reservation confirmQuote(Quote quote, List<Reservation> transactionReservations) throws ReservationException {
 		logger.log(Level.INFO, "<{0}> Reservation of {1}", new Object[] { name, quote.toString() });
 		List<Car> availableCars = getAvailableCarsForCarType(quote.getCarType(), quote.getStartDate(), quote.getEndDate());
+		
+		this.pruneAvailableCars(availableCars, transactionReservations, quote.getStartDate(), quote.getEndDate());
+		
 		if (availableCars.isEmpty()) {
 			throw new ReservationException("Reservation failed, all cars of type " + quote.getCarType()
 					+ " are unavailable from " + quote.getStartDate() + " to " + quote.getEndDate());
@@ -287,6 +294,34 @@ public class CarRentalCompany {
 		return res;
 	}
 
+	// In the list of available cars, remove those that would conflict with existing reservations that are
+	// present in the transaction of confirmQuotes(), but NOT present in the database
+	public void pruneAvailableCars(List<Car> availableCars, List<Reservation> transactionReservations, Date start, Date end) {
+
+		List<Reservation> reservationsClone = new ArrayList<Reservation>(transactionReservations);
+		
+		for(Reservation res : reservationsClone) {
+			if(!res.getRentalCompany().equals(this.getName()) ||
+					(!start.equals(res.getStartDate()) && !dateBetween(start, res.getStartDate(), res.getEndDate())) &&
+					!end.equals(res.getEndDate()) && !dateBetween(end, res.getStartDate(), res.getEndDate())
+				)	
+			{
+				transactionReservations.remove(res);
+			}
+		}
+		
+		for(Reservation res : transactionReservations) {
+			// Since the equals() method of class Car only checks on the carId, we make a virtual Car object to pass to the
+			// remove() method of the availableCars list (this method uses the equals method to find the object to remove).
+			Car virtualCar = new Car(res.getCarId(), null);
+			availableCars.remove(virtualCar);
+		}
+	}
+	
+	public boolean dateBetween(Date dateToCheck, Date start, Date end) {
+		return dateToCheck.after(start) && dateToCheck.before(end);
+	}
+	
 	public void cancelReservation(Reservation res) {
 		//TODO: implement
 		logger.log(Level.INFO, "<{0}> Cancelling reservation {1}", new Object[] { name, res.toString() });
