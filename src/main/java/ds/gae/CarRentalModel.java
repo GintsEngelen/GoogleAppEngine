@@ -132,41 +132,6 @@ public class CarRentalModel {
 	}
 
 	/**
-	 * Confirm the given list of quotes
-	 * 
-	 * @param quotes the quotes to confirm
-	 * @return The list of reservations, resulting from confirming all given quotes.
-	 * 
-	 * @throws ReservationException One of the quotes cannot be confirmed. Therefore
-	 *                              none of the given quotes is confirmed.
-	 */
-	public List<Reservation> confirmQuotes(List<Quote> quotes) throws ReservationException {
-		List<Reservation> reservations = new ArrayList<>();
-		Transaction txn = datastore.newTransaction();
-		
-		try {
-			for(Quote quote : quotes) {
-				CarRentalCompany company = new CarRentalCompany(quote.getRentalCompany());
-				
-				Reservation res = company.confirmQuote(quote, new ArrayList<Reservation>(reservations));
-				reservations.add(res);
-				
-				txn.put(res.getReservationEntity());
-			}
-			
-			txn.commit();
-		}
-		finally {
-			if(txn.isActive()) {
-				txn.rollback();
-				throw new ReservationException("One of the quotes could not be confirmed");
-			}
-		}
-		
-    	return reservations;
-	}
-
-	/**
 	 * Get all reservations made by the given car renter.
 	 *
 	 * @param renter name of the car renter

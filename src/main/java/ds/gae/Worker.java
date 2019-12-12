@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 
 import javax.mail.Message;
@@ -25,8 +26,13 @@ import javax.servlet.http.HttpSession;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
+import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreOptions;
+import com.google.cloud.datastore.Transaction;
 
+import ds.gae.entities.CarRentalCompany;
 import ds.gae.entities.Quote;
+import ds.gae.entities.Reservation;
 import ds.gae.view.JSPSite;
 import ds.gae.view.Tools;
 
@@ -46,7 +52,7 @@ public class Worker extends HttpServlet {
 		    ArrayList<Quote> quotes = payload.getQuotes();
 		    
 			renter = payload.getRenter();
-			CarRentalModel.get().confirmQuotes(quotes);
+			this.confirmQuotes(quotes);
 						
 			Session session = Session.getDefaultInstance(new Properties(), null);
 			Message msg = new MimeMessage(session);
@@ -76,5 +82,42 @@ public class Worker extends HttpServlet {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} 
+	}
+	
+	/**
+	 * Confirm the given list of quotes
+	 * 
+	 * @param quotes the quotes to confirm
+	 * @return The list of reservations, resulting from confirming all given quotes.
+	 * 
+	 * @throws ReservationException One of the quotes cannot be confirmed. Therefore
+	 *                              none of the given quotes is confirmed.
+	 */
+	public List<Reservation> confirmQuotes(List<Quote> quotes) throws ReservationException {
+		Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+		
+		List<Reservation> reservations = new ArrayList<>();
+		Transaction txn = datastore.newTransaction();
+		
+		try {
+			for(Quote quote : quotes) {
+				CarRentalCompany company = new CarRentalCompany(quote.getRentalCompany());
+				
+				Reservation res = company.confirmQuote(quote, new ArrayList<Reservation>(reservations));
+				reservations.add(res);
+				
+				txn.put(res.getReservationEntity());
+			}
+			
+			txn.commit();
+		}
+		finally {
+			if(txn.isActive()) {
+				txn.rollback();
+				throw new ReservationException("One of the quotes could not be confirmed");
+			}
+		}
+		
+    	return reservations;
 	}
 }
